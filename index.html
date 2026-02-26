@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Samurai Showdown</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        /* ... existing body styles ... */
+
+        /* ... existing h1 styles ... */
+
+        p {
+            font-family: 'Cinzel', serif;
+            /* Epic/Honor Font */
+            font-size: 18px;
+            /* Reduced size */
+            margin-bottom: 60px;
+            color: #d1d5db;
+            /* Light Grey (Gray-300) */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 0, 0, 0.5);
+            /* Glowing shadow */
+            letter-spacing: 4px;
+            /* Wide cinematic spacing */
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        body {
+            background-color: #2c2c2c;
+            background-image: url('./img/homepage.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-shadow: 4px 4px 0px #000;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: white;
+            text-transform: uppercase;
+            animation: pulse 2s infinite;
+            line-height: 1.2;
+            padding: 10px;
+            /* Text Shadow for "Samurai" (Black) */
+            text-shadow: 4px 4px 0px #000, 0px 0px 2px #000;
+        }
+
+        /* Special styling for "SHOWDOWN" */
+        .showdown-text {
+            /* Yellow Gradient Face */
+            background: linear-gradient(180deg, #facc15 50%, #ca8a04 50%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            /* Standard property */
+            -webkit-text-fill-color: transparent;
+
+            /* Black Shadow/Outline */
+            text-shadow: none !important;
+            /* Override inherited shadow */
+            filter: drop-shadow(4px 4px 0px #000);
+
+            display: inline-block;
+        }
+
+
+
+        .btn {
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 6px 6px 0px #000;
+            display: inline-block;
+            /* Fix display */
+            text-align: center;
+            color: white;
+            border: 4px solid white;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #000;
+        }
+
+        .btn-main {
+            padding: 20px 50px;
+            font-size: 28px;
+            background-color: #ff4d4d;
+            /* Classic Red */
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            animation: pulse-btn 2s infinite;
+            display: inline-block;
+            border: 4px solid white;
+            color: white;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .btn-main:hover {
+            background-color: #ff1a1a;
+            transform: scale(1.05);
+            box-shadow: none;
+            border-color: white;
+        }
+
+        .btn-secondary {
+            padding: 15px 30px;
+            font-size: 16px;
+            background-color: #eab308;
+            /* Gold/Yellow for options */
+            margin: 0 15px;
+            width: 180px;
+        }
+
+        .btn-secondary:hover {
+            background-color: #ca8a04;
+            transform: translateY(-3px);
+            filter: brightness(1.1);
+        }
+
+        @keyframes pulse-btn {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Overlay to darken background */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            /* Reduced opacity */
+            z-index: 1;
+            pointer-events: none;
+            /* Allow clicking through */
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .top-options {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 2;
+        }
+
+        h1,
+        p {
+            position: relative;
+            z-index: 2;
+        }
+
+        .icon-btn {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+            background: transparent;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Tooltip text */
+        .icon-btn::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: white;
+            text-shadow: 2px 2px 0 #000;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            white-space: nowrap;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .icon-btn:hover::after {
+            opacity: 1;
+        }
+
+        /* Settings Container Font Override */
+        .settings-container,
+        .settings-container *,
+        .volume-label,
+        .settings-container .btn,
+        #volPercent {
+            font-family: 'Lilita One', cursive !important;
+            letter-spacing: 1px;
+        }
+
+        /* Volume Slider Styling */
+        .volume-control-container {
+            width: 100%;
+            max-width: 600px;
+            /* Wider for single row */
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            /* Center Vertically */
+            justify-content: space-between;
+            gap: 15px;
+            background: transparent;
+            /* Removed background */
+            padding: 10px 5px;
+            border-radius: 0;
+            /* Capsule shape */
+            border: none;
+            box-shadow: none;
+            border-bottom: 2px solid rgba(120, 53, 15, 0.2);
+            /* Divider line */
+        }
+
+        .volume-icon {
+            font-size: 32px;
+            color: #0ea5e9;
+            /* Sky Blue icon */
+            filter: drop-shadow(2px 2px 0 #000);
+            display: flex;
+            align-items: center;
+        }
+
+        .volume-label {
+            color: #374151;
+            /* Softer Dark Grey (Gray-700) instead of Black */
+            font-size: 20px;
+            /* Slightly smaller for balance */
+            margin: 0;
+            text-transform: uppercase;
+            text-shadow: none;
+            /* No shadow on text as requested ("clean") */
+            white-space: nowrap;
+            margin-right: 15px;
+            font-weight: 400;
+            flex-shrink: 0;
+            /* Don't shrink label */
+        }
+
+        /* Volume Slider Styling - Dynamic Fill */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            flex-grow: 1;
+            height: 22px;
+            /* Slightly taller for the gloss */
+            background: linear-gradient(to right, #facc15 0%, #facc15 60%, #374151 60%, #374151 100%);
+            border-radius: 11px;
+            /* perfectly round */
+            outline: none;
+            border: 2px solid #292524;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+            transition: background 0.05s linear;
+            cursor: pointer;
+        }
+
+        /* Webkit Thumb - The Orange Pill */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 36px;
+            background: linear-gradient(to bottom, #fbbf24, #ea580c);
+            /* Yellow to Red-Orange */
+            border: 2px solid #fef08a;
+            /* Pale yellow border like reference */
+            border-radius: 8px;
+            /* Rounded rect, not circle */
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+            margin-top: -7px;
+        }
+
+        /* Firefox Thumb */
+        input[type=range]::-moz-range-thumb {
+            width: 28px;
+            height: 36px;
+            background: linear-gradient(to bottom, #fbbf24, #ea580c);
+            border: 2px solid #fef08a;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Portrait Rotation Enforcement Overlay */
+        #portrait-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            color: white;
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        @media screen and (orientation: portrait) and (max-width: 900px) {
+            #portrait-overlay {
+                display: flex;
+            }
+
+            .main-container,
+            .top-options,
+            h1,
+            p {
+                display: none !important;
+                /* hide all UI elements underneath rotation prompt */
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 32px;
+                text-align: center;
+                line-height: 1.5;
+                margin-top: 50px;
+            }
+
+            p {
+                font-size: 12px;
+                text-align: center;
+                padding: 0 20px;
+                margin-bottom: 30px;
+            }
+
+            .btn-main {
+                padding: 15px 30px;
+                font-size: 20px;
+            }
+
+            .top-options {
+                top: 10px;
+                right: 10px;
+            }
+        }
+
+        /* Mobile Settings Layout Fix */
+        @media (max-width: 800px) {
+            .settings-wrapper {
+                transform: scale(0.8);
+            }
+
+            #level-indicator {
+                font-size: 9px !important;
+                padding: 6px 12px !important;
+                bottom: 10px !important;
+                right: 10px !important;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .settings-wrapper {
+                transform: scale(0.65);
+            }
+        }
+
+        @media (max-height: 500px) {
+            .settings-wrapper {
+                transform: scale(0.55);
+            }
+        }
+
+        @media (max-height: 400px) {
+            .settings-wrapper {
+                transform: scale(0.45);
+            }
+        }
+
+        /* Mobile Landscape View Fix (Low Vertical Space) */
+        @media (max-height: 500px) {
+            h1 {
+                font-size: 36px;
+                margin-bottom: 5px;
+            }
+
+            p {
+                font-size: 12px;
+                margin-bottom: 15px;
+            }
+
+            .btn-main {
+                padding: 10px 25px;
+                font-size: 18px;
+                margin-bottom: 5px;
+            }
+
+            .btn-secondary {
+                padding: 8px 15px;
+                font-size: 14px;
+                margin-top: 10px !important;
+            }
+
+            .top-options {
+                top: 10px;
+                right: 10px;
+            }
+
+            .icon-btn {
+                width: 40px;
+                height: 40px;
+            }
+
+            #level-indicator {
+                font-size: 9px !important;
+                padding: 6px 12px !important;
+                bottom: 10px !important;
+                right: 10px !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Portrait Rotation Overlay -->
+    <div id="portrait-overlay">
+        <svg style="width: 80px; height: 80px; margin-bottom: 20px" viewBox="0 0 24 24" fill="white">
+            <path
+                d="M16 1H8C6.34 1 5 2.34 5 4v16c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm1 18H7V5h10v14z"
+                transform="rotate(90 12 12)" />
+        </svg>
+        <h2 style="font-size: 16px; line-height: 1.8; padding: 0 20px; font-family: 'Press Start 2P', cursive;">PLEASE
+            ROTATE YOUR<br>DEVICE FOREVER</h2>
+    </div>
+
+    <div class="overlay"></div>
+
+    <!-- Top Right Options -->
+    <div class="top-options">
+
+        <a href="#" class="icon-btn" data-label="SETTINGS" onclick="openSettings()"><img src="./img/setting.png"
+                alt="Settings" style="width: 100%; height: 100%; object-fit: contain;"></a>
+    </div>
+
+    <h1>Samurai <span class="showdown-text">Showdown</span></h1>
+    <p>Prepare for Honor. Prepare for Battle.</p>
+
+    <div class="main-container">
+        <!-- Main Start Button -->
+        <a href="#" class="btn btn-main" onclick="
+            audio.play('click');
+            const maxLvl = localStorage.getItem('maxUnlockedLevel') || 1;
+            sessionStorage.setItem('game_access', 'true');
+            // Slight delay for sound
+            setTimeout(() => {
+                window.location.href = `game.html?level=${maxLvl}`;
+            }, 300);
+            return false;
+        ">START FIGHT</a>
+        <!-- Levels Button -->
+        <a href="#" onclick="audio.playAndRedirect('levels.html'); return false;" class="btn btn-secondary"
+            style="margin-top: 20px;">LEVELS</a>
+    </div>
+
+    <!-- Bottom Right Level Indicator -->
+    <div id="level-indicator" style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: rgba(128, 128, 128, 0.5); /* Light gray transparent */
+        padding: 10px 20px;
+        border-radius: 8px;
+        color: white;
+        font-family: 'Press Start 2P', cursive;
+        font-size: 14px;
+        z-index: 10;
+        pointer-events: none;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    ">
+        LEVEL 1
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script>
+        // Update level indicator on load
+        const savedLevel = localStorage.getItem('maxUnlockedLevel') || 1;
+        document.getElementById('level-indicator').innerText = `LEVEL ${savedLevel}`;
+
+        // Initialize Difficulty
+        let currentDifficulty = localStorage.getItem('gameDifficulty') || 'LOW';
+        updateDifficultyUI();
+
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'flex';
+            if (window.audio) {
+                const vol = audio.currentVolume || (audio.musicVolume !== undefined ? audio.musicVolume : 0.6); // Fallback if mixed
+                const slider = document.getElementById('volumeSlider');
+                if (slider) {
+                    slider.value = vol;
+                    updateSliderFill(slider);
+                }
+            }
+            updateDifficultyUI();
+        }
+
+        function updateVolume(val) {
+            audio.setVolume(val);
+            const slider = document.getElementById('volumeSlider');
+            updateSliderFill(slider);
+        }
+
+        function setDifficulty(level) {
+            currentDifficulty = level;
+            localStorage.setItem('gameDifficulty', level);
+            updateDifficultyUI();
+            // Play click sound for feedback
+            if (window.audio) audio.play('click');
+        }
+
+        function updateDifficultyUI() {
+            const lowBtn = document.getElementById('diffLow');
+            const highBtn = document.getElementById('diffHigh');
+
+            if (currentDifficulty === 'LOW') {
+                lowBtn.style.opacity = '1';
+                lowBtn.style.transform = 'scale(1.1)';
+                highBtn.style.opacity = '0.6';
+                highBtn.style.transform = 'scale(1)';
+            } else {
+                lowBtn.style.opacity = '0.6';
+                lowBtn.style.transform = 'scale(1)';
+                highBtn.style.opacity = '1';
+                highBtn.style.transform = 'scale(1.1)';
+            }
+        }
+
+        function updateSliderFill(slider) {
+            if (!slider) return;
+            const val = slider.value * 100;
+            // Glossy effect: Lighter yellow fill (amber-400 to orange-500) | Warmer dark grey empty (stone-600 to stone-800)
+            const emptyColor = "#6b7280"; // Gray-500
+            const emptyDark = "#4b5563"; // Gray-600
+
+            slider.style.background = `
+                linear-gradient(to bottom, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 100%),
+                linear-gradient(to right, #fbbf24 0%, #d97706 ${val}%, ${emptyColor} ${val}%, ${emptyDark} 100%)
+            `;
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function resetProgress() {
+            if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+                localStorage.removeItem('maxUnlockedLevel');
+                location.reload();
+            }
+        }
+    </script>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        backdrop-filter: blur(5px);
+    ">
+        <div class="settings-wrapper"
+            style="position: relative; display: flex; justify-content: center; align-items: center; transition: transform 0.2s ease;">
+            <!-- Image Frame -->
+            <img src="./img/setting-continer.png"
+                style="width: 800px; height: auto; display: block; filter: drop-shadow(0 0 20px rgba(0,0,0,0.5));"
+                alt="Settings Frame">
+
+            <!-- Content Overlay -->
+            <div class="settings-content-container" style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 140px 60px 60px 60px; /* Increased top padding to clear built-in title */
+                text-align: center;
+            ">
+
+                <!-- Controls Guide -->
+                <!-- Volume Control -->
+                <div class="volume-control-container">
+                    <span class="volume-icon" style="margin-right: 15px;">
+                        <img src="./img/speaker.png" alt="Speaker" width="45" height="45"
+                            style="filter: drop-shadow(2px 3px 2px rgba(0,0,0,0.3));">
+                    </span>
+                    <span class="volume-label">MASTER VOLUME</span>
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.6"
+                        oninput="updateVolume(this.value)">
+                </div>
+
+                <!-- Difficulty Control -->
+                <div class="volume-control-container" style="justify-content: center; gap: 30px;">
+                    <span class="volume-label" style="margin-right: 10px;">DIFFICULTY:</span>
+                    <div style="display: flex; gap: 15px;">
+                        <button id="diffLow" onclick="setDifficulty('LOW')" style="
+                            background-color: #22c55e; 
+                            border: 3px solid #000; 
+                            box-shadow: 3px 3px 0px #000; 
+                            color: white;
+                            font-family: 'Lilita One', cursive; 
+                            font-size: 18px; 
+                            padding: 8px 15px;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            transform: scale(1.1); /* Default selected look */
+                        ">LOW</button>
+                        <button id="diffHigh" onclick="setDifficulty('HIGH')" style="
+                            background-color: #ef4444; 
+                            border: 3px solid #000; 
+                            box-shadow: 3px 3px 0px #000; 
+                            color: white;
+                            font-family: 'Lilita One', cursive; 
+                            font-size: 18px; 
+                            padding: 8px 15px;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            opacity: 0.6;
+                        ">HIGH</button>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <!-- Actions -->
+                <div
+                    style="display: flex; flex-direction: row; gap: 20px; width: 100%; justify-content: center; margin-top: 20px;">
+                    <button onclick="resetProgress()" class="btn" style="
+                            background-color: #ef4444; 
+                            border: 3px solid #000; 
+                            box-shadow: 4px 4px 0px #000; 
+                            color: white;
+                            font-family: 'Lilita One', cursive; 
+                            font-size: 20px; 
+                            padding: 10px 20px;
+                            border-radius: 8px;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            transition: transform 0.1s, box-shadow 0.1s;
+                            cursor: pointer;
+                            flex: 1;
+                            max-width: 200px;
+                        "
+                        onmousedown="this.style.transform='translate(2px, 2px)'; this.style.boxShadow='2px 2px 0px #000';"
+                        onmouseup="this.style.transform='translate(0, 0)'; this.style.boxShadow='4px 4px 0px #000';"
+                        onmouseleave="this.style.transform='translate(0, 0)'; this.style.boxShadow='4px 4px 0px #000';">
+                        DELETE SAVE
+                    </button>
+                    <button onclick="closeSettings()" class="btn" style="
+                            background-color: #3b82f6; 
+                            border: 3px solid #000; 
+                            box-shadow: 4px 4px 0px #000; 
+                            color: white;
+                            font-family: 'Lilita One', cursive; 
+                            font-size: 20px; 
+                            padding: 10px 20px;
+                            border-radius: 8px;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            transition: transform 0.1s, box-shadow 0.1s;
+                            cursor: pointer;
+                            flex: 1;
+                            max-width: 200px;
+                        "
+                        onmousedown="this.style.transform='translate(2px, 2px)'; this.style.boxShadow='2px 2px 0px #000';"
+                        onmouseup="this.style.transform='translate(0, 0)'; this.style.boxShadow='4px 4px 0px #000';"
+                        onmouseleave="this.style.transform='translate(0, 0)'; this.style.boxShadow='4px 4px 0px #000';">
+                        CLOSE
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
