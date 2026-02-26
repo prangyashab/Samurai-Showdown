@@ -270,6 +270,12 @@
 </head>
 
 <body>
+  <!-- Fullscreen Loading Overlay -->
+  <div id="loading-screen"
+    style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 99999; display: flex; justify-content: center; align-items: center; color: white; font-family: 'Press Start 2P', cursive; font-size: 24px; transition: opacity 0.3s ease;">
+    LOADING...
+  </div>
+
   <!-- red container div -->
   <div style="position: relative; display: inline-block">
     <!-- smaller red container div -->
@@ -694,6 +700,15 @@
 
     // Initialize controls when DOM is available
     document.addEventListener('DOMContentLoaded', setupMobileControls);
+
+    // Hide loading screen when background image finishes loading
+    window.addEventListener('load', () => {
+      const loadingScreen = document.getElementById('loading-screen');
+      if (loadingScreen) {
+        loadingScreen.style.opacity = '0';
+        setTimeout(() => loadingScreen.style.display = 'none', 300);
+      }
+    });
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"
     integrity="sha512-H6cPm97FAsgIKmlBA4s774vqoN24V5gSQL4yBTDOY2su2DeXZVhQPxFK4P6GPdnZqM9fg1G3cMv5wD7e6cFLZQ=="

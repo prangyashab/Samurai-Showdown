@@ -473,6 +473,12 @@
 </head>
 
 <body>
+    <!-- Fullscreen Loading Overlay -->
+    <div id="loading-screen"
+        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 99999; display: flex; justify-content: center; align-items: center; color: white; font-family: 'Press Start 2P', cursive; font-size: 24px; transition: opacity 0.3s ease;">
+        LOADING...
+    </div>
+
     <!-- Portrait Rotation Overlay -->
     <div id="portrait-overlay">
         <svg style="width: 80px; height: 80px; margin-bottom: 20px" viewBox="0 0 24 24" fill="white">
@@ -533,6 +539,15 @@
 
     <script src="js/audio.js"></script>
     <script>
+        // Hide loading screen when background image finishes loading
+        window.addEventListener('load', () => {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => loadingScreen.style.display = 'none', 300);
+            }
+        });
+
         // Update level indicator on load
         const savedLevel = localStorage.getItem('maxUnlockedLevel') || 1;
         document.getElementById('level-indicator').innerText = `LEVEL ${savedLevel}`;
