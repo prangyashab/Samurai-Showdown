@@ -40,7 +40,8 @@ function triggerShake(intensity, duration) {
 canvas.width = 1024
 canvas.height = 576
 
-// Initial fill
+// Initial black fill to prevent white flash
+c.fillStyle = 'black'
 c.fillRect(0, 0, canvas.width, canvas.height)
 
 // Disable image smoothing for crisp pixel art scaling
@@ -379,10 +380,22 @@ function startSequence() {
   }, 1000); // 1.5s delay for Level Text
 }
 
-startSequence();
+// startSequence(); replaced by window.startGameSequence called from game.html
+let lastTime = 0;
+const fps = 60;
+const nextFrameTime = 1000 / fps;
 
-function animate() {
+function animate(timestamp) {
   window.requestAnimationFrame(animate)
+
+  // FPS CAP: Calculate elapsed time since last draw
+  const elapsed = timestamp - lastTime;
+
+  // If not enough time has passed for 60fps, skip this frame
+  if (elapsed < nextFrameTime) return;
+
+  // Adjust lastTime to stay synced (modulo ensures we don't drift)
+  lastTime = timestamp - (elapsed % nextFrameTime);
 
   // 1. Clear Screen (Black) to avoid trails during shake
   c.fillStyle = 'black'
@@ -670,7 +683,12 @@ function animate() {
   c.restore() // End Camera Transform (Restore original context)
 } // end animate
 
-animate()
+window.startGameSequence = () => {
+  lastTime = performance.now(); // Reset timer to current time
+  startSequence();
+  animate(lastTime);
+};
+
 
 window.addEventListener('keydown', (event) => {
   if (!gameStarted) return; // Block input during intro

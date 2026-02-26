@@ -10,10 +10,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json" />
     <title>Samurai Showdown - Levels</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+    <!-- Preload Fonts to stop FOUT (font changes) -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" as="style" />
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" as="style" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet" />
+
+    <!-- Preload heavy background image so it starts loading immediately -->
+    <link rel="preload" as="image" href="./img/homepage.png" />
+
     <style>
         * {
             box-sizing: border-box;
@@ -509,9 +516,9 @@
 </head>
 
 <body>
-    <!-- Fullscreen Loading Overlay -->
+    <!-- Fullscreen Loading Overlay - Show inline immediately without visual jumps -->
     <div id="loading-screen"
-        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 99999; display: flex; justify-content: center; align-items: center; color: white; font-family: 'Press Start 2P', cursive; font-size: 24px; transition: opacity 0.3s ease;">
+        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 99999; display: flex; justify-content: center; align-items: center; color: white; font-family: 'Press Start 2P', system-ui, sans-serif; font-size: 24px; transition: opacity 0.2s ease;">
         LOADING...
     </div>
 
@@ -554,13 +561,20 @@
 
     <script src="js/audio.js"></script>
     <script>
-        // Hide loading screen when background image finishes loading
-        window.addEventListener('load', () => {
-            const loadingScreen = document.getElementById('loading-screen');
-            if (loadingScreen) {
-                loadingScreen.style.opacity = '0';
-                setTimeout(() => loadingScreen.style.display = 'none', 300);
-            }
+        // Force load screen off earlier. 
+        // We use DOMContentLoaded alongside a small timeout instead of waiting for EVERY image via 'load'
+        document.addEventListener('DOMContentLoaded', () => {
+            // Preload image object
+            const bgImage = new Image();
+            bgImage.src = './img/homepage.png';
+
+            bgImage.onload = () => {
+                const loadingScreen = document.getElementById('loading-screen');
+                if (loadingScreen) {
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => loadingScreen.style.display = 'none', 200);
+                }
+            };
         });
 
         const grid = document.getElementById('levelGrid');

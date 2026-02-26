@@ -11,6 +11,9 @@
   <link rel="manifest" href="./manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Preload Fonts to stop FOUT (font changes) -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" as="style" />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" as="style" />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet">
   <script>
@@ -274,10 +277,10 @@
   </style>
 </head>
 
-<body>
-  <!-- Fullscreen Loading Overlay -->
+<body style="background-color: black;">
+  <!-- Fullscreen Loading Overlay - Show inline immediately without visual jumps -->
   <div id="loading-screen"
-    style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 99999; display: flex; justify-content: center; align-items: center; color: white; font-family: 'Press Start 2P', cursive; font-size: 24px; transition: opacity 0.3s ease;">
+    style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 99999; display: flex; justify-content: center; align-items: center; color: white; font-family: 'Press Start 2P', system-ui, sans-serif; font-size: 24px; transition: opacity 0.2s ease;">
     LOADING...
   </div>
 
@@ -291,10 +294,7 @@
         align-items: center;
         padding: 20px;
       ">
-      <!-- Debug/Version Label -->
-      <div
-        style="position: absolute; top: 0; left: 20px; font-size: 8px; color: rgba(255,255,255,0.8); font-family: sans-serif;">
-        BUILD: V.PERFECT_BALANCE</div>
+
       <!-- player health -->
       <div style="
           position: relative;
@@ -706,12 +706,21 @@
     // Initialize controls when DOM is available
     document.addEventListener('DOMContentLoaded', setupMobileControls);
 
-    // Hide loading screen when background image finishes loading
+    // Wait for all assets (including background image) to load completely before starting
     window.addEventListener('load', () => {
       const loadingScreen = document.getElementById('loading-screen');
       if (loadingScreen) {
         loadingScreen.style.opacity = '0';
-        setTimeout(() => loadingScreen.style.display = 'none', 300);
+        setTimeout(() => {
+          loadingScreen.style.display = 'none';
+          if (typeof window.startGameSequence === 'function') {
+            window.startGameSequence();
+          }
+        }, 300); // Wait for the opacity fade transition to finish
+      } else {
+        if (typeof window.startGameSequence === 'function') {
+          window.startGameSequence();
+        }
       }
     });
   </script>
