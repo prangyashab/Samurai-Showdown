@@ -135,15 +135,22 @@ function renderStars(container, count) {
 }
 
 let timer = 60
+window.isGamePaused = false;
 let timerId
+
 function decreaseTimer() {
   if (timer > 0) {
     timerId = setTimeout(decreaseTimer, 1000)
-    timer--
-    document.querySelector('#timer').innerHTML = timer
+
+    // Only count down if the game is NOT paused
+    if (!window.isGamePaused) {
+      timer--
+      document.querySelector('#timer').innerHTML = timer
+    }
   }
 
-  if (timer === 0) {
+  // Timer ran out!
+  if (timer === 0 && !window.isGamePaused) {
     determineWinner({ player, enemies, timerId, currentLevel: window.gameLevel })
   }
 }

@@ -342,7 +342,7 @@ const keys = {
 }
 
 // decreaseTimer() // Don't start timer yet
-let gameStarted = false;
+window.gameStarted = false;
 
 function startSequence() {
   let countdown = 3;
@@ -373,7 +373,7 @@ function startSequence() {
             document.querySelector('#displayText').style.opacity = '1';
           }
         });
-        gameStarted = true;
+        window.gameStarted = true;
         decreaseTimer();
       }
     }, 1000);
@@ -387,6 +387,12 @@ const nextFrameTime = 1000 / fps;
 
 function animate(timestamp) {
   window.requestAnimationFrame(animate)
+
+  // Pause Logic: If game is paused, sync timestamp and abort
+  if (window.isGamePaused) {
+    lastTime = timestamp; // Prevent massive elapsed time jump on unpause
+    return;
+  }
 
   // FPS CAP: Calculate elapsed time since last draw
   const elapsed = timestamp - lastTime;
@@ -436,7 +442,7 @@ function animate(timestamp) {
   }
 
   // --- Cinematic Start Sequence Movement ---
-  if (!gameStarted) {
+  if (!window.gameStarted) {
     const playerStopPos = isMobile ? canvas.width * 0.2 : 300;
     const enemyStopPos = isMobile ? canvas.width * 0.8 : canvas.width - 350;
 
@@ -691,7 +697,7 @@ window.startGameSequence = () => {
 
 
 window.addEventListener('keydown', (event) => {
-  if (!gameStarted) return; // Block input during intro
+  if (!window.gameStarted) return; // Block input during intro
 
   if (!player.dead) {
     switch (event.key) {
@@ -767,3 +773,95 @@ window.addEventListener('keyup', (event) => {
   // enemy keys
   // removed arrow keys for AI control
 })
+
+// --- PRELOADER & LAZY LOADING SYSTEM ---
+const assetsToLoad = [
+  `./img/background/bg${mapIndex}.png`,
+  './img/samuraiMack/Idle.png',
+  './img/samuraiMack/Run.png',
+  './img/samuraiMack/Jump.png',
+  './img/samuraiMack/Fall.png',
+  './img/samuraiMack/Attack1.png',
+  './img/samuraiMack/Take Hit - white silhouette.png',
+  './img/samuraiMack/Death.png',
+  './img/kenji/Idle.png',
+  './img/kenji/Run.png',
+  './img/kenji/Jump.png',
+  './img/kenji/Fall.png',
+  './img/kenji/Attack1.png',
+  './img/kenji/Take hit.png',
+  './img/kenji/Death.png'
+];
+
+let assetsLoadedCount = 0;
+const totalAssetsCount = assetsToLoad.length;
+const loadingScreenEl = document.getElementById('loading-screen');
+let loadingComplete = false;
+let displayedPercent = 0;
+
+function updateActualProgress() {
+  assetsLoadedCount++;
+}
+
+// Visual loading percentage animator
+const loadingInterval = setInterval(() => {
+  if (loadingComplete) return;
+
+  // The actual percentage loaded
+  const targetPercent = Math.floor((assetsLoadedCount / totalAssetsCount) * 100);
+
+  // Smoothly increment displayed percentage to catch up
+  if (displayedPercent < targetPercent) {
+    displayedPercent += 3; // Speed of climb
+  } else if (displayedPercent < 95 && assetsLoadedCount < totalAssetsCount) {
+    // Artificial small progression while waiting
+    if (Math.random() > 0.8) displayedPercent += 1;
+  }
+
+  // Cap it
+  if (displayedPercent > 99 && assetsLoadedCount < totalAssetsCount) {
+    displayedPercent = 99;
+  }
+  if (displayedPercent > 100) displayedPercent = 100;
+
+  // Update UI
+  if (loadingScreenEl && !loadingScreenEl.innerText.includes("SLOW")) {
+    loadingScreenEl.innerText = `LOADING... ${displayedPercent}%`;
+  }
+
+  // Finished!
+  if (displayedPercent >= 100 && assetsLoadedCount >= totalAssetsCount) {
+    loadingComplete = true;
+    clearInterval(loadingInterval);
+
+    if (loadingScreenEl) {
+      loadingScreenEl.style.opacity = '0';
+      setTimeout(() => {
+        loadingScreenEl.style.display = 'none';
+        if (typeof window.startGameSequence === 'function') {
+          window.startGameSequence();
+        }
+      }, 300);
+    } else {
+      if (typeof window.startGameSequence === 'function') {
+        window.startGameSequence();
+      }
+    }
+  }
+}, 30); // update every 30ms
+
+// Start loading the strictly necessary images in memory (Lazy Loading Map)
+assetsToLoad.forEach(src => {
+  const img = new Image();
+  img.onload = updateActualProgress;
+  img.onerror = updateActualProgress; // Proceed even if an error occurs to prevent hard-lock
+  img.src = src;
+});
+
+// Fallback message if loading is taking way too long (Slow Internet detected)
+setTimeout(() => {
+  if (!loadingComplete && loadingScreenEl) {
+    loadingScreenEl.style.fontSize = "16px";
+    loadingScreenEl.innerText = `SLOW INTERNET...\nPLEASE WAIT (${displayedPercent}%)`;
+  }
+}, 4000); // 4 seconds wait time

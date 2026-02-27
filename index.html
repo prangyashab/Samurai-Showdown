@@ -552,20 +552,77 @@
 
     <script src="js/audio.js"></script>
     <script>
-        // Force load screen off earlier. 
-        // We use DOMContentLoaded alongside a small timeout instead of waiting for EVERY image via 'load'
-        document.addEventListener('DOMContentLoaded', () => {
-            // Preload image object
-            const bgImage = new Image();
-            bgImage.src = './img/homepage.png';
+        // --- PRELOADER & LAZY LOADING SYSTEM (HOMEPAGE) ---
+        const assetsToLoad = [
+            './img/homepage.png',
+            './img/samLogo.png'
+            // Add any other core UI assets here if needed
+        ];
 
-            bgImage.onload = () => {
-                const loadingScreen = document.getElementById('loading-screen');
-                if (loadingScreen) {
-                    loadingScreen.style.opacity = '0';
-                    setTimeout(() => loadingScreen.style.display = 'none', 200);
+        let assetsLoadedCount = 0;
+        const totalAssetsCount = assetsToLoad.length;
+        const loadingScreenEl = document.getElementById('loading-screen');
+        let loadingComplete = false;
+        let displayedPercent = 0;
+
+        function updateActualProgress() {
+            assetsLoadedCount++;
+        }
+
+        // Visual loading percentage animator
+        const loadingInterval = setInterval(() => {
+            if (loadingComplete) return;
+
+            // The actual percentage loaded
+            const targetPercent = Math.floor((assetsLoadedCount / totalAssetsCount) * 100);
+
+            // Smoothly increment displayed percentage to catch up
+            if (displayedPercent < targetPercent) {
+                displayedPercent += 3; // Speed of climb
+            } else if (displayedPercent < 95 && assetsLoadedCount < totalAssetsCount) {
+                // Artificial small progression while waiting
+                if (Math.random() > 0.8) displayedPercent += 1;
+            }
+
+            // Cap it
+            if (displayedPercent > 99 && assetsLoadedCount < totalAssetsCount) {
+                displayedPercent = 99;
+            }
+            if (displayedPercent > 100) displayedPercent = 100;
+
+            // Update UI
+            if (loadingScreenEl && !loadingScreenEl.innerText.includes("SLOW")) {
+                loadingScreenEl.innerText = `LOADING... ${displayedPercent}%`;
+            }
+
+            // Finished!
+            if (displayedPercent >= 100 && assetsLoadedCount >= totalAssetsCount) {
+                loadingComplete = true;
+                clearInterval(loadingInterval);
+
+                if (loadingScreenEl) {
+                    loadingScreenEl.style.opacity = '0';
+                    setTimeout(() => loadingScreenEl.style.display = 'none', 300);
                 }
-            };
+            }
+        }, 30); // update every 30ms
+
+        // Start loading the strictly necessary images in memory
+        document.addEventListener('DOMContentLoaded', () => {
+            assetsToLoad.forEach(src => {
+                const img = new Image();
+                img.onload = updateActualProgress;
+                img.onerror = updateActualProgress;
+                img.src = src;
+            });
+
+            // Fallback message if loading is taking way too long (Slow Internet detected)
+            setTimeout(() => {
+                if (!loadingComplete && loadingScreenEl) {
+                    loadingScreenEl.style.fontSize = "16px";
+                    loadingScreenEl.innerText = `SLOW INTERNET...\nPLEASE WAIT (${displayedPercent}%)`;
+                }
+            }, 4000); // 4 seconds wait time
         });
 
         // Update level indicator on load

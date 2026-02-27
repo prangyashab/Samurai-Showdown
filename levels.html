@@ -120,7 +120,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 20px;
+            margin-top: 60px;
         }
 
         h1 {
@@ -215,35 +215,87 @@
         @media (max-width: 800px),
         (max-height: 500px) {
             h1 {
-                font-size: 28px;
-                margin-top: 10px;
+                display: none;
+                /* Hide header on mobile so only "LEVEL SELECT" shows */
+            }
+
+            .top-nav {
+                top: 10px;
+                padding: 0 15px;
+            }
+
+            .container {
+                margin-top: 25px;
+                /* Drop width to 85% instead of 98% to forcefully create blank space on BOTH left and right sides! */
+                width: 85%;
+                /* Update constraint matching the new narrower 13 column width */
+                max-width: calc(230vh - 120px);
             }
 
             .level-banner {
-                font-size: 16px;
-                padding: 5px 20px;
-                margin-bottom: 10px;
+                font-size: 14px;
+                padding: 4px 15px;
+                margin-top: 0px;
+                margin-bottom: 5px;
             }
 
             .level-grid {
-                grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
-                /* Increased from 50px to make fewer level boxes per row */
-                gap: 10px;
-                max-height: calc(100vh - 120px);
+                /* 13 columns to keep it mathematically limited to 4 rows */
+                grid-template-columns: repeat(13, minmax(0, 1fr));
+                /* Increase the gap significantly between boxes so they aren't squished tighter by the new side margins */
+                gap: 1.5vw;
+                max-height: none;
+                overflow: visible !important;
                 width: 100%;
-                padding-top: 35px;
-                /* Keeps stars from getting cut off on mobile */
-                padding-bottom: 50px;
+                padding-top: 45px;
+                /* Greatly increased top padding so the banner doesn't sit right on top of the grid */
+                padding-bottom: 45px;
+                /* Symmetrically increased the bottom padding to match the top space */
+            }
+
+            .level-btn {
+                border-width: 2px !important;
+                /* Thinner border for tiny boxes so it doesn't crush the inside lock */
             }
 
             .level-btn span {
-                font-size: 14px;
-                margin-top: 2px;
+                font-size: 10px !important;
+                /* !important is required because global span styles declared later in the file are overriding this rule! */
+                margin-top: 1px !important;
+            }
+
+            .stars {
+                width: 100% !important;
+                /* Re-center and tighten */
+                top: -12px !important;
+                /* Bring it perfectly down to kiss the top edge of the box */
+                gap: 0 !important;
+                /* Very little spacing on mobile */
+            }
+
+            .stars span {
+                width: 11px !important;
+                height: 11px !important;
+                max-width: none !important;
+                max-height: none !important;
+            }
+
+            /* The Global CSS arch pushes stars down 6px! On an 11px star, that breaks it in half. Scaling it gracefully... */
+            .stars span:nth-child(1) {
+                transform: translateY(2px) rotate(-20deg) !important;
+            }
+
+            .stars span:nth-child(2) {
+                transform: translateY(0) scale(1.1) !important;
+            }
+
+            .stars span:nth-child(3) {
+                transform: translateY(2px) rotate(20deg) !important;
             }
 
             .icon-btn {
-                width: 45px;
-                height: 45px;
+                width: 52px;
+                height: 52px;
             }
         }
 
@@ -540,12 +592,25 @@
              But on levels page, usually you go back. I'll put Map (Home) on left top or similar layout.
              Let's stick to the visual reference if possible. Reference has Map icon top left, Setting top right. -->
 
-        <!-- Image Back Arrow -->
+        <!-- Glossy Orange Circular Back Arrow (Matches Original Image) -->
         <a href="#" class="icon-btn" onclick="audio.playAndRedirect('index.html')">
-            <img src="./img/left-arrow.png" alt="Back"
-                style="width: 60%; height: 60%; object-fit: contain; filter: drop-shadow(4px 4px 0 #000);">
+            <svg viewBox="0 0 48 48"
+                style="width: 72%; height: 72%; filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.6)); overflow: visible;">
+                <defs>
+                    <radialGradient id="orangeBtn" cx="50%" cy="30%" r="70%">
+                        <stop offset="0%" stop-color="#fbbf24" />
+                        <stop offset="60%" stop-color="#f59e0b" />
+                        <stop offset="100%" stop-color="#b45309" />
+                    </radialGradient>
+                </defs>
+                <circle cx="24" cy="24" r="22" fill="url(#orangeBtn)" stroke="#78350f" stroke-width="1.5" />
+                <!-- Curved return arrow (Perfectly Centered) -->
+                <path d="M13 25 L23 15 V20 C32 20 35 25 34 33 C34 31 29 27 23 27 V32 Z" fill="#ffffff"
+                    filter="drop-shadow(0px 2px 1px rgba(0,0,0,0.4))" />
+            </svg>
         </a>
 
+        <!-- Image Settings Gear -->
         <a href="#" class="icon-btn" onclick="openSettings()"><img src="./img/setting.png" alt="Settings"
                 style="width: 100%; height: 100%; object-fit: contain;"></a>
     </div>
@@ -561,20 +626,76 @@
 
     <script src="js/audio.js"></script>
     <script>
-        // Force load screen off earlier. 
-        // We use DOMContentLoaded alongside a small timeout instead of waiting for EVERY image via 'load'
-        document.addEventListener('DOMContentLoaded', () => {
-            // Preload image object
-            const bgImage = new Image();
-            bgImage.src = './img/homepage.png';
+        // --- PRELOADER & LAZY LOADING SYSTEM (LEVELS PAGE) ---
+        const assetsToLoad = [
+            './img/homepage.png',
+            './img/setting.png'
+        ];
 
-            bgImage.onload = () => {
-                const loadingScreen = document.getElementById('loading-screen');
-                if (loadingScreen) {
-                    loadingScreen.style.opacity = '0';
-                    setTimeout(() => loadingScreen.style.display = 'none', 200);
+        let assetsLoadedCount = 0;
+        const totalAssetsCount = assetsToLoad.length;
+        const loadingScreenEl = document.getElementById('loading-screen');
+        let loadingComplete = false;
+        let displayedPercent = 0;
+
+        function updateActualProgress() {
+            assetsLoadedCount++;
+        }
+
+        // Visual loading percentage animator
+        const loadingInterval = setInterval(() => {
+            if (loadingComplete) return;
+
+            // The actual percentage loaded
+            const targetPercent = Math.floor((assetsLoadedCount / totalAssetsCount) * 100);
+
+            // Smoothly increment displayed percentage to catch up
+            if (displayedPercent < targetPercent) {
+                displayedPercent += 3; // Speed of climb
+            } else if (displayedPercent < 95 && assetsLoadedCount < totalAssetsCount) {
+                // Artificial small progression while waiting
+                if (Math.random() > 0.8) displayedPercent += 1;
+            }
+
+            // Cap it
+            if (displayedPercent > 99 && assetsLoadedCount < totalAssetsCount) {
+                displayedPercent = 99;
+            }
+            if (displayedPercent > 100) displayedPercent = 100;
+
+            // Update UI
+            if (loadingScreenEl && !loadingScreenEl.innerText.includes("SLOW")) {
+                loadingScreenEl.innerText = `LOADING... ${displayedPercent}%`;
+            }
+
+            // Finished!
+            if (displayedPercent >= 100 && assetsLoadedCount >= totalAssetsCount) {
+                loadingComplete = true;
+                clearInterval(loadingInterval);
+
+                if (loadingScreenEl) {
+                    loadingScreenEl.style.opacity = '0';
+                    setTimeout(() => loadingScreenEl.style.display = 'none', 300);
                 }
-            };
+            }
+        }, 30); // update every 30ms
+
+        // Start loading the strictly necessary images in memory
+        document.addEventListener('DOMContentLoaded', () => {
+            assetsToLoad.forEach(src => {
+                const img = new Image();
+                img.onload = updateActualProgress;
+                img.onerror = updateActualProgress;
+                img.src = src;
+            });
+
+            // Fallback message if loading is taking way too long (Slow Internet detected)
+            setTimeout(() => {
+                if (!loadingComplete && loadingScreenEl) {
+                    loadingScreenEl.style.fontSize = "16px";
+                    loadingScreenEl.innerText = `SLOW INTERNET...\nPLEASE WAIT (${displayedPercent}%)`;
+                }
+            }, 4000); // 4 seconds wait time
         });
 
         const grid = document.getElementById('levelGrid');
@@ -613,16 +734,34 @@
                 const overlay = document.createElement('div');
                 overlay.className = 'lock-overlay';
 
-                const lockImg = document.createElement('img');
-                lockImg.src = 'img/lock.png';
-                lockImg.alt = '🔒'; // Fallback emoji
-                lockImg.style.width = '90%';
-                lockImg.style.height = '90%';
-                lockImg.style.objectFit = 'contain';
-                // Make it pop if transparency is an issue
-                // lockImg.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))';
-
-                overlay.appendChild(lockImg);
+                // Realistic 3D Golden Lock (Matches Original Image)
+                overlay.innerHTML = `
+                  <svg viewBox="0 0 64 64" style="width: 55%; height: 55%; filter: drop-shadow(0px 3px 4px rgba(0,0,0,0.7)); overflow: visible;">
+                    <defs>
+                      <linearGradient id="shackle" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#9ca3af"/>
+                        <stop offset="25%" stop-color="#f3f4f6"/>
+                        <stop offset="75%" stop-color="#d1d5db"/>
+                        <stop offset="100%" stop-color="#4b5563"/>
+                      </linearGradient>
+                      <linearGradient id="goldBody" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#fef08a"/>
+                        <stop offset="20%" stop-color="#eab308"/>
+                        <stop offset="80%" stop-color="#a16207"/>
+                        <stop offset="100%" stop-color="#713f12"/>
+                      </linearGradient>
+                    </defs>
+                    <!-- Steel Shackle -->
+                    <path d="M18 30 V16 C18 8 46 8 46 16 V30" fill="none" stroke="url(#shackle)" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M18 30 V16 C18 8 46 8 46 16 V30" fill="none" stroke="#374151" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Shiny Gold Body -->
+                    <rect x="8" y="28" width="48" height="34" rx="4" fill="url(#goldBody)" stroke="#422006" stroke-width="1.5" />
+                    <rect x="10" y="30" width="44" height="4" fill="#a16207" opacity="0.4" />
+                    <!-- Keyhole -->
+                    <circle cx="32" cy="42" r="5" fill="#111827" />
+                    <path d="M29 45 L27 54 H37 L35 45 Z" fill="#111827" />
+                  </svg>
+                `;
                 btn.appendChild(overlay);
             }
 
