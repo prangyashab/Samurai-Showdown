@@ -335,6 +335,28 @@
     LOADING...
   </div>
 
+  <!-- Multiplayer Waiting Overlay -->
+  <div id="multiplayer-lobby"
+    style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.95); z-index: 99990; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; font-family: 'Press Start 2P', system-ui, sans-serif; transition: opacity 0.2s ease; text-align: center; padding: 20px;">
+    <h2 style="font-size: 28px; margin-bottom: 20px; color: #facc15; text-shadow: 4px 4px 0 #000; line-height: 1.5;">
+      WAITING FOR CHALLENGER</h2>
+    <p style="font-size: 12px; margin-bottom: 30px; color: #ccc; line-height: 1.5;">SHARE THIS INVITE CODE WITH YOUR
+      FRIEND:</p>
+    <div id="inviteCodeDisplay"
+      style="background: #111; padding: 20px; border: 4px solid white; font-size: 20px; letter-spacing: 2px; color: #fff; margin-bottom: 30px; user-select: text; word-break: break-all;">
+      GENERATING...</div>
+    <p style="font-size: 10px; color: #666; line-height: 1.5;">GAME WILL START AUTOMATICALLY WHEN THEY JOIN.</p>
+  </div>
+
+  <div id="peer-pause-overlay"
+    style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.88); z-index: 99989; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 20px;">
+    <h2 style="font-size: 26px; margin-bottom: 16px; color: #67e8f9; text-shadow: 3px 3px 0 #000;">MATCH PAUSED</h2>
+    <p style="font-size: 12px; color: #d1d5db; line-height: 1.7; max-width: 520px;">
+      WAITING FOR THE OTHER PLAYER TO RESUME...
+    </p>
+  </div>
+
+
   <!-- red container div -->
   <div style="position: relative; display: inline-block">
     <!-- smaller red container div -->
@@ -350,7 +372,7 @@
       <div style="width: 100%; display: flex; flex-direction: column;">
         <!-- Player Label Row -->
         <div style="display: flex; justify-content: space-between; padding: 0 5px 6px 5px; align-items: flex-end;">
-          <span class="fighter-label"
+          <span id="playerLabel" class="fighter-label"
             style="color: white; font-family: 'Titan One', cursive; font-size: 18px; text-shadow: 2px 2px 0 #000; letter-spacing: 1px;">SAMURAI</span>
           <span id="playerHealthText" class="fighter-label"
             style="color: #fca5a5; font-family: 'Titan One', cursive; font-size: 18px; text-shadow: 2px 2px 0 #000;">100%</span>
@@ -408,8 +430,8 @@
       <!-- Level Display Removed -->
 
       <!-- timer -->
-      <!-- Stopwatch Timer -->
-      <div
+      <!-- Stopwatch Timer (Hidden for Multiplayer) -->
+      <div id="timer-wrapper"
         style="flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; position: relative; margin: 0 20px;">
         <!-- Top Button -->
         <div style="
@@ -453,7 +475,7 @@
             z-index: 2;
             text-shadow: 2px 2px 0 #000;
         ">
-          10
+          99
         </div>
       </div>
       <!-- enemy health wrapper -->
@@ -462,7 +484,7 @@
         <div style="display: flex; justify-content: space-between; padding: 0 5px 6px 5px; align-items: flex-end;">
           <span id="enemyHealthText" class="fighter-label"
             style="color: #fca5a5; font-family: 'Titan One', cursive; font-size: 18px; text-shadow: 2px 2px 0 #000;">100%</span>
-          <span class="fighter-label"
+          <span id="enemyLabel" class="fighter-label"
             style="color: white; font-family: 'Titan One', cursive; font-size: 18px; text-shadow: 2px 2px 0 #000; letter-spacing: 1px;">ENEMY</span>
         </div>
         <!-- Health Bar -->
@@ -804,6 +826,10 @@
       window.isGamePaused = true;
       document.getElementById('pauseModal').style.display = 'flex';
 
+      if (window.isMultiplayer && typeof window.sendPauseStateToPeer === 'function') {
+        window.sendPauseStateToPeer(true);
+      }
+
       // Initialize the slider's color fill to match the current volume instantly
       const slider = document.getElementById('volumeSliderPause');
       if (slider && window.audio) {
@@ -815,6 +841,10 @@
     function resumeGame() {
       document.getElementById('pauseModal').style.display = 'none';
       window.isGamePaused = false;
+
+      if (window.isMultiplayer && typeof window.sendPauseStateToPeer === 'function') {
+        window.sendPauseStateToPeer(false);
+      }
     }
 
     function restartGame() {
@@ -1010,13 +1040,31 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"
     integrity="sha512-H6cPm97FAsgIKmlBA4s774vqoN24V5gSQL4yBTDOY2su2DeXZVhQPxFK4P6GPdnZqM9fg1G3cMv5wD7e6cFLZQ=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="js/audio.js?v=104"></script>
-  <script src="js/utils.js?v=104"></script>
-  <script src="js/classes.js?v=104"></script>
-  <script src="index.js?v=104"></script>
+  <!-- WebRTC for Multiplayer -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+  <script src="js/audio.js?v=112"></script>
+  <script src="js/utils.js?v=112"></script>
+  <script src="js/classes.js?v=112"></script>
+  <script src="js/multiplayer.js?v=112"></script>
+  <script src="index.js?v=112"></script>
   <script>
+    // FORCE CLEAR CACHE TO FIX MULTIPLAYER
+    if ('caches' in window) {
+      caches.keys().then((names) => {
+        for (let name of names) caches.delete(name);
+      });
+    }
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
+        // Unregister any existing service workers
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          for (let registration of registrations) {
+            registration.unregister();
+          }
+        });
+
         navigator.serviceWorker.register('./sw.js')
           .then(reg => console.log('SW registered!', reg))
           .catch(err => console.log('SW failed!', err));

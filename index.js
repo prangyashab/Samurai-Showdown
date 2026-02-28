@@ -1,5 +1,55 @@
 const canvas = document.querySelector('canvas')
 
+// MULTIPLAYER FALLBACK CHECK
+const _urlParams = new URLSearchParams(window.location.search);
+const _urlMode = _urlParams.get('mode');
+const _storedMode = sessionStorage.getItem('multiplayerMode');
+const _mode = (_urlMode === 'host' || _urlMode === 'join')
+  ? _urlMode
+  : ((_storedMode === 'host' || _storedMode === 'join') ? _storedMode : null);
+
+if (_mode === 'host' || _mode === 'join') {
+  window.isMultiplayer = true;
+  window.isHost = _mode === 'host';
+} else {
+  window.isMultiplayer = false;
+  window.isHost = false;
+}
+
+// MULTIPLAYER VIEW SETUP: Each player sees themselves on the LEFT
+if (window.isMultiplayer) {
+  // Change labels to YOU / OPPONENT
+  const pLabel = document.getElementById('playerLabel');
+  const eLabel = document.getElementById('enemyLabel');
+  if (pLabel) pLabel.innerText = 'YOU';
+  if (eLabel) eLabel.innerText = 'OPPONENT';
+
+  // Hide rage bars in multiplayer (not synced, would be confusing)
+  const rageW = document.getElementById('rage-wrapper');
+  const rageDummy = document.getElementById('rage-wrapper-dummy');
+  if (rageW) rageW.style.display = 'none';
+  if (rageDummy) rageDummy.style.display = 'none';
+
+  // GUEST: Swap health bar element IDs so all existing code auto-targets correct bars
+  // Left bar tracks YOUR health, right bar tracks OPPONENT health
+  if (!window.isHost) {
+    const pH = document.getElementById('playerHealth');
+    const pHT = document.getElementById('playerHealthText');
+    const eH = document.getElementById('enemyHealth');
+    const eHT = document.getElementById('enemyHealthText');
+    if (pH && eH) {
+      pH.id = '__swapTmp1';
+      eH.id = 'playerHealth';
+      document.getElementById('__swapTmp1').id = 'enemyHealth';
+    }
+    if (pHT && eHT) {
+      pHT.id = '__swapTmp2';
+      eHT.id = 'playerHealthText';
+      document.getElementById('__swapTmp2').id = 'enemyHealthText';
+    }
+  }
+}
+
 if (!canvas) {
   throw new Error("No canvas found - likely on homepage")
 }
@@ -53,6 +103,10 @@ let groundLevel = canvas.height - 140
 // --- LEVEL & DIFFICULTY SCALING (Moved to Top) ---
 // --- LEVEL & PROGRESSION SYSTEM ---
 function getStartingLevel() {
+  if (window.isMultiplayer) {
+    return 1;
+  }
+
   const urlParams = new URLSearchParams(window.location.search);
   const urlLevel = parseInt(urlParams.get('level'));
   const savedLevel = parseInt(localStorage.getItem('maxUnlockedLevel')) || 1;
@@ -203,7 +257,10 @@ function getLevelData(level) {
   return { count, speed, damage, aggression, difficulty };
 }
 
-const levelData = getLevelData(currentLevel);
+const levelData = window.isMultiplayer
+  ? { count: 1, speed: 0, damage: 10, aggression: 0, difficulty: 'MULTI' }
+  : getLevelData(currentLevel);
+
 const enemies = [];
 
 // Spawn Enemies
@@ -343,11 +400,12 @@ const keys = {
 
 // decreaseTimer() // Don't start timer yet
 window.gameStarted = false;
+window.isPeerPauseLock = false;
 
-function startSequence() {
+window.startSequence = function startSequence() {
   let countdown = 3;
   document.querySelector('#displayText').style.display = 'flex';
-  document.querySelector('#displayText').innerText = `LEVEL ${currentLevel}`;
+  document.querySelector('#displayText').innerText = window.isMultiplayer ? '1v1 BATTLE' : `LEVEL ${currentLevel}`;
   // Delay countdown start to show level
   setTimeout(() => {
     document.querySelector('#displayText').innerHTML = countdown;
@@ -389,7 +447,7 @@ function animate(timestamp) {
   window.requestAnimationFrame(animate)
 
   // Pause Logic: If game is paused, sync timestamp and abort
-  if (window.isGamePaused) {
+  if (window.isGamePaused || window.isPeerPauseLock) {
     lastTime = timestamp; // Prevent massive elapsed time jump on unpause
     return;
   }
@@ -446,31 +504,54 @@ function animate(timestamp) {
     const playerStopPos = isMobile ? canvas.width * 0.2 : 300;
     const enemyStopPos = isMobile ? canvas.width * 0.8 : canvas.width - 350;
 
-    // Move Player to position
-    if (player.position.x < playerStopPos) {
-      player.velocity.x = 12;
-      player.switchSprite('run');
-      player.facing = 'right';
-    } else {
-      player.velocity.x = 0;
-      player.switchSprite('idle');
-      player.facing = 'right';
-    }
-
-    // Move Enemy to position
-    enemies.forEach((enemy, index) => {
-      // Stagger them slightly
-      const target = enemyStopPos + (index * 50);
-      if (enemy.position.x > target) {
-        enemy.velocity.x = -12;
-        enemy.switchSprite('run');
-        enemy.facing = 'left';
+    if (window.isMultiplayer && !window.isHost) {
+      // GUEST VIEW: enemies[0] (your character) enters from LEFT, player (opponent) from RIGHT
+      // enemies[0] is local — move it like the player intro
+      if (enemies[0].position.x < playerStopPos) {
+        enemies[0].velocity.x = 12;
+        enemies[0].switchSprite('run');
+        enemies[0].facing = 'right';
       } else {
-        enemy.velocity.x = 0;
-        enemy.switchSprite('idle');
-        enemy.facing = 'left';
+        enemies[0].velocity.x = 0;
+        enemies[0].switchSprite('idle');
+        enemies[0].facing = 'right';
       }
-    });
+      // player (opponent) is remote-controlled — position comes from mirrored SYNC
+      // Just ensure correct facing for visual consistency
+      if (player.position.x > enemyStopPos) {
+        player.facing = 'left';
+      } else {
+        player.facing = 'left';
+      }
+    } else {
+      // HOST / SINGLE PLAYER: Normal positions
+      // Move Player to position
+      if (player.position.x < playerStopPos) {
+        player.velocity.x = 12;
+        player.switchSprite('run');
+        player.facing = 'right';
+      } else {
+        player.velocity.x = 0;
+        player.switchSprite('idle');
+        player.facing = 'right';
+      }
+
+      // Move Enemy to position
+      enemies.forEach((enemy, index) => {
+        if (enemy.isRemoteControlled) return; // Remote enemy position from SYNC
+        // Stagger them slightly
+        const target = enemyStopPos + (index * 50);
+        if (enemy.position.x > target) {
+          enemy.velocity.x = -12;
+          enemy.switchSprite('run');
+          enemy.facing = 'left';
+        } else {
+          enemy.velocity.x = 0;
+          enemy.switchSprite('idle');
+          enemy.facing = 'left';
+        }
+      });
+    }
 
     return; // Skip combat logic during intro
   }
@@ -492,14 +573,16 @@ function animate(timestamp) {
 
   // Normal Game Logic (Movement, AI, Combat)
   // player.velocity.x = 0 // Moved inside player movement block to support dash persistence
-  enemies.forEach(e => e.velocity.x = 0);
+  if (!window.isMultiplayer) {
+    enemies.forEach(e => e.velocity.x = 0);
+  }
 
   // Player Movement Speed Boost in Rage/Difficulty
   const baseMoveSpeed = levelData.difficulty === 'HIGH' ? 8 : 7;
   const moveSpeed = player.isRaging ? (baseMoveSpeed * 1.5) : baseMoveSpeed;
 
   // Player Movement
-  if (!player.dead) {
+  if (!player.dead && (!window.isMultiplayer || window.isHost)) {
     if (player.isDashing) {
       player.switchSprite('run');
       // Velocity is maintained from the dash event
@@ -527,12 +610,25 @@ function animate(timestamp) {
   }
 
   // Prevent player from going off-screen
-  if (player.position.x < 0) {
-    player.position.x = 0;
-    if (player.isDashing) player.isDashing = false; // Stop dash if hitting wall
-  } else if (player.position.x + player.width > canvas.width) {
-    player.position.x = canvas.width - player.width;
-    if (player.isDashing) player.isDashing = false;
+  if (!window.isMultiplayer || window.isHost) {
+    if (player.position.x < 0) {
+      player.position.x = 0;
+      if (player.isDashing) player.isDashing = false; // Stop dash if hitting wall
+    } else if (player.position.x + player.width > canvas.width) {
+      player.position.x = canvas.width - player.width;
+      if (player.isDashing) player.isDashing = false;
+    }
+  }
+
+  // GUEST: Prevent local fighter (enemies[0]) from going off-screen
+  if (window.isMultiplayer && !window.isHost && enemies[0] && !enemies[0].dead) {
+    if (enemies[0].position.x < 0) {
+      enemies[0].position.x = 0;
+      if (enemies[0].isDashing) enemies[0].isDashing = false;
+    } else if (enemies[0].position.x + enemies[0].width > canvas.width) {
+      enemies[0].position.x = canvas.width - enemies[0].width;
+      if (enemies[0].isDashing) enemies[0].isDashing = false;
+    }
   }
 
   // Enemy AI Movement - LOOP for all enemies
@@ -542,75 +638,77 @@ function animate(timestamp) {
       const distanceY = player.position.y - enemy.position.y
       const absDistanceX = Math.abs(distanceX)
 
-      // AI Logic (Scaled with levelData.speed)
-      const chaseSpeed = levelData.speed;
+      // AI Logic (Scaled with levelData.speed) - Disabled in Multiplayer
+      if (!window.isMultiplayer) {
+        const chaseSpeed = levelData.speed;
 
-      // 1. Retreat
-      if (absDistanceX < 50) {
-        if (distanceX > 0) {
-          enemy.velocity.x = -chaseSpeed
-          enemy.switchSprite('run')
-          enemy.facing = 'left'
-        } else {
-          enemy.velocity.x = chaseSpeed
-          enemy.switchSprite('run')
-          enemy.facing = 'right'
-        }
-      }
-      // 2. Approach
-      else if (absDistanceX > 120) {
-        if (Math.random() < 0.95) {
+        // 1. Retreat
+        if (absDistanceX < 50) {
           if (distanceX > 0) {
-            enemy.velocity.x = chaseSpeed
-            enemy.switchSprite('run')
-            enemy.facing = 'right'
-          } else {
             enemy.velocity.x = -chaseSpeed
             enemy.switchSprite('run')
             enemy.facing = 'left'
-          }
-        } else {
-          enemy.switchSprite('idle')
-        }
-      }
-      // 3. Combat
-      else {
-        if (Math.random() < 0.1) {
-          if (distanceX > 0) {
-            enemy.velocity.x = 1
+          } else {
+            enemy.velocity.x = chaseSpeed
             enemy.switchSprite('run')
             enemy.facing = 'right'
-          } else {
-            enemy.velocity.x = -1
-            enemy.switchSprite('run')
-            enemy.facing = 'left'
           }
-        } else {
-          enemy.switchSprite('idle')
-          if (distanceX > 0) enemy.facing = 'right'
-          else enemy.facing = 'left'
         }
-      }
-
-      // Attack (Scaled Aggression)
-      if (Math.abs(distanceX) < 220 && Math.abs(distanceY) < 100) {
-        if (Math.random() < levelData.aggression) {
-          enemy.attack()
+        // 2. Approach
+        else if (absDistanceX > 120) {
+          if (Math.random() < 0.95) {
+            if (distanceX > 0) {
+              enemy.velocity.x = chaseSpeed
+              enemy.switchSprite('run')
+              enemy.facing = 'right'
+            } else {
+              enemy.velocity.x = -chaseSpeed
+              enemy.switchSprite('run')
+              enemy.facing = 'left'
+            }
+          } else {
+            enemy.switchSprite('idle')
+          }
         }
-      }
-
-      // Jump
-      if (Math.random() < 0.005) {
-        if (enemy.position.y + enemy.height >= groundLevel) {
-          enemy.velocity.y = -20
+        // 3. Combat
+        else {
+          if (Math.random() < 0.1) {
+            if (distanceX > 0) {
+              enemy.velocity.x = 1
+              enemy.switchSprite('run')
+              enemy.facing = 'right'
+            } else {
+              enemy.velocity.x = -1
+              enemy.switchSprite('run')
+              enemy.facing = 'left'
+            }
+          } else {
+            enemy.switchSprite('idle')
+            if (distanceX > 0) enemy.facing = 'right'
+            else enemy.facing = 'left'
+          }
         }
-      }
 
-      if (enemy.velocity.y < 0) {
-        enemy.switchSprite('jump')
-      } else if (enemy.velocity.y > 0) {
-        enemy.switchSprite('fall')
-      }
+        // Attack (Scaled Aggression)
+        if (Math.abs(distanceX) < 220 && Math.abs(distanceY) < 100) {
+          if (Math.random() < levelData.aggression) {
+            enemy.attack()
+          }
+        }
+
+        // Jump
+        if (Math.random() < 0.005) {
+          if (enemy.position.y + enemy.height >= groundLevel) {
+            enemy.velocity.y = -20
+          }
+        }
+
+        if (enemy.velocity.y < 0) {
+          enemy.switchSprite('jump')
+        } else if (enemy.velocity.y > 0) {
+          enemy.switchSprite('fall')
+        }
+      } // End AI Block
 
       // Collision Checks (Player hits Enemy)
       if (
@@ -710,13 +808,101 @@ function animate(timestamp) {
 
 window.startGameSequence = () => {
   lastTime = performance.now(); // Reset timer to current time
-  startSequence();
+  if (!window.isMultiplayer) {
+    window.startSequence(); // Auto-start for strictly single-player
+  }
   animate(lastTime);
+};
+
+window.resetMultiplayerRound = () => {
+  if (!window.isMultiplayer || !player || !enemies[0]) return;
+
+  const enemy = enemies[0];
+
+  window.gameStarted = false;
+
+  // Swap spawn positions based on host/guest view
+  if (window.isHost) {
+    player.position.x = -200;
+    player.position.y = 0;
+    player.facing = 'right';
+    enemy.position.x = canvas.width + 200;
+    enemy.position.y = 0;
+    enemy.facing = 'left';
+  } else {
+    // GUEST: your character (enemy) on left, opponent (player) on right
+    enemy.position.x = -200;
+    enemy.position.y = 0;
+    enemy.facing = 'right';
+    player.position.x = canvas.width + 200;
+    player.position.y = 0;
+    player.facing = 'left';
+  }
+
+  player.velocity.x = 0;
+  player.velocity.y = 0;
+  player.health = 100;
+  player.dead = false;
+  player.isAttacking = false;
+  player.isDashing = false;
+  player.jumps = 2;
+  player.switchSprite('idle');
+
+  enemy.velocity.x = 0;
+  enemy.velocity.y = 0;
+  enemy.health = 100;
+  enemy.dead = false;
+  enemy.isAttacking = false;
+  enemy.isDashing = false;
+  enemy.jumps = 2;
+  enemy.switchSprite('idle');
+
+  player.rage = 0;
+  player.isRaging = false;
+  player.damage = player.baseDamage;
+
+  const modal = document.querySelector('#gameOverModal');
+  if (modal) modal.style.display = 'none';
+
+  const homeBtn = document.querySelector('#homeBtn');
+  if (homeBtn) homeBtn.style.display = 'none';
+
+  const playerHealth = document.querySelector('#playerHealth');
+  if (playerHealth) playerHealth.style.width = '100%';
+
+  const playerHealthText = document.querySelector('#playerHealthText');
+  if (playerHealthText) playerHealthText.innerText = '100%';
+
+  const enemyHealth = document.querySelector('#enemyHealth');
+  if (enemyHealth) enemyHealth.style.width = '100%';
+
+  const enemyHealthText = document.querySelector('#enemyHealthText');
+  if (enemyHealthText) enemyHealthText.innerText = '100%';
+
+  const playerEnergy = document.querySelector('#playerEnergy');
+  if (playerEnergy) {
+    playerEnergy.style.width = '0%';
+    playerEnergy.style.background = 'linear-gradient(90deg, #06b6d4, #22d3ee)';
+  }
+
+  const rageText = document.querySelector('#rageText');
+  if (rageText) {
+    rageText.style.display = 'none';
+    rageText.innerText = 'RAGE READY [SHIFT]';
+  }
+
+  if (typeof window.resetMatchTimer === 'function') {
+    window.resetMatchTimer(99);
+  }
+
+  window.startSequence();
 };
 
 
 window.addEventListener('keydown', (event) => {
+  if (window.isMultiplayer && !window.isHost) return; // Guest keyboard mapped to enemy in multiplayer.js
   if (!window.gameStarted) return; // Block input during intro
+  if (window.isGamePaused || window.isPeerPauseLock) return;
 
   if (!player.dead) {
     switch (event.key) {
@@ -754,7 +940,7 @@ window.addEventListener('keydown', (event) => {
         }
         break
       case ' ':
-        player.attack()
+        if (!player.isAttacking) player.attack()
         break
       case 'Shift':
         if (player.rage >= 100 && !player.isRaging) {
@@ -782,6 +968,9 @@ window.addEventListener('keydown', (event) => {
 })
 
 window.addEventListener('keyup', (event) => {
+  if (window.isMultiplayer && !window.isHost) return;
+  if (window.isGamePaused || window.isPeerPauseLock) return;
+
   switch (event.key) {
     case 'ArrowRight':
       keys.ArrowRight.pressed = false

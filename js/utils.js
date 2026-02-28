@@ -26,32 +26,54 @@ function determineWinner({ player, enemies, timerId, currentLevel }) {
   modal.style.display = 'flex'
   if (homeBtn) homeBtn.style.display = 'flex';
 
+  if (window.isMultiplayer && typeof window.onMultiplayerRoundEnd === 'function') {
+    window.onMultiplayerRoundEnd();
+  }
+
   // Hide mobile controls when modal is shown (Aggressive hide)
   const mobileControls = document.querySelector('#mobile-controls')
   if (mobileControls) {
     mobileControls.style.setProperty('display', 'none', 'important');
   }
 
+  // Guest perspective: player=opponent, enemies[0]=you → swap victory/defeat
+  const isGuestView = window.isMultiplayer && !window.isHost;
+
   // 1. Defeat Condition: Player Dead
   if (player.health <= 0) {
-    showDefeat(title, starsContainer, nextBtn);
+    if (isGuestView) {
+      showVictory(title, starsContainer, nextBtn, enemies[0].health, lvl);
+    } else {
+      showDefeat(title, starsContainer, nextBtn);
+    }
     return;
   }
 
   // 2. Victory Condition: All Enemies Dead
   const allEnemiesDead = enemies.every(e => e.health <= 0);
   if (allEnemiesDead) {
-    showVictory(title, starsContainer, nextBtn, player.health, lvl);
+    if (isGuestView) {
+      showDefeat(title, starsContainer, nextBtn);
+    } else {
+      showVictory(title, starsContainer, nextBtn, player.health, lvl);
+    }
     return;
   }
 
   // 3. Timeout Condition
-  // If time runs out, compare integrity
   const totalEnemyHealth = enemies.reduce((sum, e) => sum + Math.max(0, e.health), 0);
-  if (player.health > totalEnemyHealth) {
-    showVictory(title, starsContainer, nextBtn, player.health, lvl);
+  if (isGuestView) {
+    if (totalEnemyHealth > player.health) {
+      showVictory(title, starsContainer, nextBtn, totalEnemyHealth, lvl);
+    } else {
+      showDefeat(title, starsContainer, nextBtn);
+    }
   } else {
-    showDefeat(title, starsContainer, nextBtn);
+    if (player.health > totalEnemyHealth) {
+      showVictory(title, starsContainer, nextBtn, player.health, lvl);
+    } else {
+      showDefeat(title, starsContainer, nextBtn);
+    }
   }
 }
 
@@ -65,33 +87,43 @@ function showVictory(title, starsContainer, nextBtn, playerHealth, currentLevel)
   else if (playerHealth > 50) stars = 2
 
   // Robust Level Progression Logic
-  const lvl = parseInt(currentLevel) || window.gameLevel || 1;
-  const nextLvl = lvl + 1;
+  if (window.isMultiplayer) {
+    if (nextBtn) {
+      nextBtn.style.display = 'block';
+      nextBtn.disabled = false;
+      nextBtn.style.opacity = '1';
+      nextBtn.querySelector('span').innerText = 'REMATCH';
+      nextBtn.onclick = () => {
+        if (typeof window.requestMultiplayerRematch === 'function') {
+          window.requestMultiplayerRematch(nextBtn);
+        } else {
+          window.location.reload();
+        }
+      };
+    }
+  } else {
+    const lvl = parseInt(currentLevel) || window.gameLevel || 1;
+    const nextLvl = lvl + 1;
 
-  // Persist progress
-  const maxUnlocked = parseInt(localStorage.getItem('maxUnlockedLevel')) || 1;
-  if (nextLvl > maxUnlocked) {
-    localStorage.setItem('maxUnlockedLevel', nextLvl.toString());
-    console.log(`Progress Saved: Next Level Unlocked is ${nextLvl}`);
+    // Persist progress
+    const maxUnlocked = parseInt(localStorage.getItem('maxUnlockedLevel')) || 1;
+    if (nextLvl > maxUnlocked) {
+      localStorage.setItem('maxUnlockedLevel', nextLvl.toString());
+    }
+
+    if (nextBtn) {
+      nextBtn.style.display = 'block';
+      nextBtn.querySelector('span').innerText = 'NEXT LEVEL';
+      // Explicit global function for the button
+      window.nextLevel = () => {
+        sessionStorage.setItem('game_access', 'true');
+        window.location.href = `game.html?level=${nextLvl}`;
+      };
+      nextBtn.onclick = window.nextLevel;
+    }
+    const levelDisplay = document.querySelector('#levelDisplay');
+    if (levelDisplay) levelDisplay.innerText = `LEVEL ${nextLvl}`;
   }
-
-  renderStars(starsContainer, stars);
-
-  if (nextBtn) {
-    nextBtn.style.display = 'block';
-
-    // Explicit global function for the button
-    window.nextLevel = () => {
-      console.log(`Navigating to Level: ${nextLvl}`);
-      sessionStorage.setItem('game_access', 'true');
-      window.location.href = `game.html?level=${nextLvl}`;
-    };
-
-    nextBtn.onclick = window.nextLevel;
-  }
-
-  const levelDisplay = document.querySelector('#levelDisplay');
-  if (levelDisplay) levelDisplay.innerText = `LEVEL ${nextLvl}`;
 }
 
 function showDefeat(title, starsContainer, nextBtn) {
@@ -100,7 +132,26 @@ function showDefeat(title, starsContainer, nextBtn) {
   if (typeof audio !== 'undefined') audio.play('defeat');
 
   renderStars(starsContainer, 0);
-  nextBtn.style.display = 'none'
+  if (nextBtn) {
+    if (window.isMultiplayer) {
+      nextBtn.style.display = 'block';
+      nextBtn.disabled = false;
+      nextBtn.style.opacity = '1';
+      nextBtn.querySelector('span').innerText = 'REMATCH';
+      nextBtn.onclick = () => {
+        if (typeof window.requestMultiplayerRematch === 'function') {
+          window.requestMultiplayerRematch(nextBtn);
+        } else {
+          window.location.reload();
+        }
+      };
+    } else {
+      nextBtn.style.display = 'block';
+      nextBtn.querySelector('span').innerText = 'RESTART';
+      window.retryLevel = () => { window.location.reload(); };
+      nextBtn.onclick = window.retryLevel;
+    }
+  }
 }
 
 function renderStars(container, count) {
@@ -134,23 +185,32 @@ function renderStars(container, count) {
   container.innerHTML = starsHtml
 }
 
-let timer = 60
+let timer = 99
 window.isGamePaused = false;
 let timerId
+
+window.resetMatchTimer = function resetMatchTimer(nextTimer = 99) {
+  clearTimeout(timerId);
+  timer = nextTimer;
+  const timerEl = document.querySelector('#timer');
+  if (timerEl) {
+    timerEl.innerHTML = timer;
+  }
+}
 
 function decreaseTimer() {
   if (timer > 0) {
     timerId = setTimeout(decreaseTimer, 1000)
 
     // Only count down if the game is NOT paused
-    if (!window.isGamePaused) {
+    if (!window.isGamePaused && !window.isPeerPauseLock) {
       timer--
       document.querySelector('#timer').innerHTML = timer
     }
   }
 
   // Timer ran out!
-  if (timer === 0 && !window.isGamePaused) {
+  if (timer === 0 && !window.isGamePaused && !window.isPeerPauseLock) {
     determineWinner({ player, enemies, timerId, currentLevel: window.gameLevel })
   }
 }

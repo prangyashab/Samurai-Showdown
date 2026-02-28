@@ -98,6 +98,7 @@ class Fighter extends Sprite {
     this.dead = false
     this.jumps = 2 // Double jump limit
     this.spritesFlipped = spritesFlipped
+    this.isRemoteControlled = false
 
 
     for (const sprite in this.sprites) {
@@ -110,6 +111,15 @@ class Fighter extends Sprite {
     this.draw()
     if (!this.dead) this.animateFrames()
 
+    // AUTO-END ATTACK: when attack animation reaches last frame, stop and return to idle
+    if (this.image === this.sprites.attack1.image &&
+        this.framesCurrent >= this.sprites.attack1.framesMax - 1) {
+      this.isAttacking = false;
+      this.image = this.sprites.idle.image;
+      this.framesMax = this.sprites.idle.framesMax;
+      this.framesCurrent = 0;
+    }
+
     // attack boxes
     if (this.facing === 'left') {
       this.attackBox.position.x = this.position.x - this.attackBox.offset.x - this.attackBox.width + this.width
@@ -117,6 +127,10 @@ class Fighter extends Sprite {
       this.attackBox.position.x = this.position.x + this.attackBox.offset.x
     }
     this.attackBox.position.y = this.position.y + this.attackBox.offset.y
+
+    if (this.isRemoteControlled) {
+      return
+    }
 
     // draw the attack box
     // c.fillRect(
@@ -204,7 +218,8 @@ class Fighter extends Sprite {
     // overriding all other animations with the attack animation
     if (
       this.image === this.sprites.attack1.image &&
-      this.framesCurrent < this.sprites.attack1.framesMax - 1
+      this.framesCurrent < this.sprites.attack1.framesMax - 1 &&
+      this.isAttacking
     )
       return
 

@@ -102,69 +102,115 @@
             font-family: 'Press Start 2P', cursive;
             cursor: pointer;
             text-decoration: none;
-            transition: all 0.2s ease;
-            box-shadow: 6px 6px 0px #000;
-            display: inline-block;
-            /* Fix display */
-            text-align: center;
+            transition: transform 0.1s ease, filter 0.2s ease, box-shadow 0.1s ease;
+            box-shadow: inset -4px -4px 0px rgba(0, 0, 0, 0.3), 4px 4px 0px #000;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
             color: white;
-            border: 4px solid white;
+            border: 4px solid #fff;
             text-shadow: 2px 2px 0px #000;
+            text-transform: uppercase;
+            box-sizing: border-box;
         }
 
         .btn:active {
             transform: translate(2px, 2px);
-            box-shadow: 2px 2px 0px #000;
+            box-shadow: inset -2px -2px 0px rgba(0, 0, 0, 0.3), 2px 2px 0px #000;
         }
 
         .btn-main {
-            padding: 20px 50px;
-            font-size: 28px;
-            background-color: #ff4d4d;
-            /* Classic Red */
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            animation: pulse-btn 2s infinite;
-            display: inline-block;
-            border: 4px solid white;
-            color: white;
-            text-shadow: 2px 2px 0px #000;
+            padding: 15px 40px;
+            font-size: 24px;
+            background: linear-gradient(180deg, #ef4444 0%, #991b1b 100%);
+            margin-bottom: 15px;
+            min-width: 360px;
         }
 
         .btn-main:hover {
-            background-color: #ff1a1a;
-            transform: scale(1.05);
-            box-shadow: none;
-            border-color: white;
+            filter: brightness(1.2);
         }
 
         .btn-secondary {
-            padding: 15px 30px;
+            padding: 12px 25px;
             font-size: 16px;
-            background-color: #eab308;
-            /* Gold/Yellow for options */
-            margin: 0 15px;
-            width: 180px;
+            background: linear-gradient(180deg, #facc15 0%, #a16207 100%);
+            min-width: 250px;
         }
 
         .btn-secondary:hover {
-            background-color: #ca8a04;
-            transform: translateY(-3px);
-            filter: brightness(1.1);
+            filter: brightness(1.2);
         }
 
-        @keyframes pulse-btn {
-            0% {
-                transform: scale(1);
-            }
+        .btn-blue {
+            background: linear-gradient(180deg, #3b82f6 0%, #1e3a8a 100%) !important;
+        }
 
-            50% {
-                transform: scale(1.02);
-            }
+        .section-title {
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 20px;
+            margin-top: 10px;
+            letter-spacing: 4px;
+            text-shadow: 2px 2px 0 #000;
+            position: relative;
+            display: inline-block;
+        }
 
-            100% {
-                transform: scale(1);
-            }
+        .section-title::before,
+        .section-title::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40px;
+            height: 4px;
+            background: #fff;
+            box-shadow: 2px 2px 0 #000;
+            transform: translateY(-50%);
+        }
+
+        .section-title::before {
+            left: -60px;
+        }
+
+        .section-title::after {
+            right: -60px;
+        }
+
+        .join-box {
+            display: flex;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 10px;
+            border: 4px solid #3b82f6;
+            box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.2), 4px 4px 0 #000;
+            align-items: center;
+            gap: 10px;
+            margin-top: 0;
+            width: 100%;
+            max-width: 360px;
+            justify-content: space-between;
+        }
+
+        .join-input {
+            padding: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            flex: 1;
+            background: #111;
+            color: #93c5fd;
+            border: 2px solid #1e3a8a;
+            outline: none;
+            box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.8);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .join-input:focus {
+            border-color: #60a5fa;
+            box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.8), 0 0 8px rgba(96, 165, 250, 0.5);
+        }
+
+        .join-input::placeholder {
+            color: #475569;
         }
 
         /* Overlay to darken background */
@@ -183,10 +229,48 @@
 
         .main-container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex-direction: row;
+            justify-content: center;
+            align-items: stretch;
+            gap: 40px;
+            width: 100%;
+            max-width: 900px;
             position: relative;
             z-index: 2;
+            padding: 0 20px;
+        }
+
+        .mode-card {
+            background: rgba(0, 0, 0, 0.65);
+            border: 4px solid #444;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), 8px 8px 0 rgba(0, 0, 0, 0.7);
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .mode-card.campaign-card {
+            border-color: #991b1b;
+        }
+
+        .mode-card.campaign-card:hover {
+            border-color: #ef4444;
+            transform: translateY(-5px);
+            box-shadow: inset 0 0 30px rgba(239, 68, 68, 0.2), 8px 12px 0 rgba(0, 0, 0, 0.7);
+        }
+
+        .mode-card.multiplayer-card {
+            border-color: #1e3a8a;
+        }
+
+        .mode-card.multiplayer-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-5px);
+            box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.2), 8px 12px 0 rgba(0, 0, 0, 0.7);
         }
 
         .top-options {
@@ -415,6 +499,15 @@
                 transform: scale(0.8);
             }
 
+            .main-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .mode-card {
+                padding: 15px;
+            }
+
             #level-indicator {
                 font-size: 9px !important;
                 padding: 6px 12px !important;
@@ -507,6 +600,32 @@
 
     <!-- Top Right Options -->
     <div class="top-options">
+        <!-- Mode Toggle [HIDDEN - uncomment to re-enable online mode toggle]-->
+        <div id="modeToggleWrap" style="display: flex; align-items: center; gap: 10px; z-index: 2; user-select: none;">
+            <span id="toggleLabelLeft" style="font-size: 10px; color: #fca5a5; font-family: 'Press Start 2P', cursive; text-shadow: 2px 2px 0 #000; transition: color 0.3s;">LEVELS</span>
+            <div id="modeToggle" onclick="toggleGameMode()" style="
+                width: 56px; height: 28px;
+                background: linear-gradient(180deg, #ef4444 0%, #991b1b 100%);
+                border: 3px solid #fff;
+                border-radius: 14px;
+                position: relative;
+                cursor: pointer;
+                box-shadow: inset -2px -2px 0 rgba(0,0,0,0.3), 2px 2px 0 #000;
+                transition: background 0.3s;
+            ">
+                <div id="toggleKnob" style="
+                    width: 20px; height: 20px;
+                    background: #fff;
+                    border-radius: 50%;
+                    position: absolute;
+                    top: 1px; left: 2px;
+                    box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+                    transition: left 0.3s;
+                "></div>
+            </div>
+            <span id="toggleLabelRight" style="font-size: 10px; color: #666; font-family: 'Press Start 2P', cursive; text-shadow: 2px 2px 0 #000; transition: color 0.3s;">ONLINE</span>
+        </div>
+        
 
         <a href="#" class="icon-btn" data-label="SETTINGS" onclick="openSettings()"><img src="./img/setting.png"
                 alt="Settings" style="width: 100%; height: 100%; object-fit: contain;"></a>
@@ -515,21 +634,47 @@
     <h1>Samurai <span class="showdown-text">Showdown</span></h1>
     <p>Prepare for Honor. Prepare for Battle.</p>
 
-    <div class="main-container">
-        <!-- Main Start Button -->
-        <a href="#" class="btn btn-main" onclick="
-            audio.play('click');
-            const maxLvl = localStorage.getItem('maxUnlockedLevel') || 1;
-            sessionStorage.setItem('game_access', 'true');
-            // Slight delay for sound
-            setTimeout(() => {
-                window.location.href = `game.html?level=${maxLvl}`;
-            }, 300);
-            return false;
-        ">START FIGHT</a>
-        <!-- Levels Button -->
-        <a href="#" onclick="audio.playAndRedirect('levels.html'); return false;" class="btn btn-secondary"
-            style="margin-top: 20px;">LEVELS</a>
+    <!-- Single centered button area that swaps based on toggle -->
+    <div class="main-container" style="flex-direction: column; align-items: center; gap: 15px; max-width: 500px;">
+
+        <!-- === LEVEL MODE BUTTONS === -->
+        <div id="levelModeUI" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+            <a href="#" class="btn btn-main" style="min-width: 0; width: 360px; padding: 18px; font-size: 24px; margin-bottom: 0;" onclick="
+                audio.play('click');
+                sessionStorage.removeItem('multiplayerMode');
+                sessionStorage.removeItem('multiplayerHostCode');
+                const maxLvl = localStorage.getItem('maxUnlockedLevel') || 1;
+                sessionStorage.setItem('game_access', 'true');
+                setTimeout(() => {
+                    window.location.href = `game.html?level=${maxLvl}&v=${Date.now()}`;
+                }, 300);
+                return false;
+            ">START FIGHT</a>
+            <a href="#" onclick="audio.playAndRedirect('levels.html'); return false;" class="btn btn-secondary"
+                style="min-width: 0; width: 220px; padding: 13px 25px; font-size: 16px; margin: 0;">LEVELS</a>
+        </div>
+
+        <!-- === ONLINE MODE BUTTONS (hidden by default) === -->
+        <div id="onlineModeUI" style="display: none; flex-direction: column; align-items: center; gap: 15px;">
+            <a href="#" class="btn btn-main btn-blue"
+                style="min-width: 0; width: 360px; margin-bottom: 0; padding: 18px; font-size: 24px;" onclick="
+                audio.play('click');
+                sessionStorage.setItem('game_access', 'true');
+                sessionStorage.setItem('multiplayerMode', 'host');
+                sessionStorage.removeItem('multiplayerHostCode');
+                setTimeout(() => {
+                    window.location.href = `game.html?mode=host&v=${Date.now()}`;
+                }, 300);
+                return false;
+            ">HOST GAME</a>
+
+            <!-- Join Game Button -->
+            <a href="#" class="btn btn-secondary"
+                style="min-width: 0; width: 220px; padding: 13px 25px; font-size: 16px; margin: 0;"
+                onclick="document.getElementById('joinCodeModal').style.display='flex'; document.getElementById('joinCodeInput').focus(); return false;">
+                JOIN
+            </a>
+        </div>
     </div>
 
     <!-- Bottom Right Level Indicator -->
@@ -537,7 +682,7 @@
         position: fixed;
         bottom: 20px;
         right: 20px;
-        background-color: rgba(128, 128, 128, 0.5); /* Light gray transparent */
+        background-color: rgba(128, 128, 128, 0.5);
         padding: 10px 20px;
         border-radius: 8px;
         color: white;
@@ -629,6 +774,44 @@
         const savedLevel = localStorage.getItem('maxUnlockedLevel') || 1;
         document.getElementById('level-indicator').innerText = `LEVEL ${savedLevel}`;
 
+        // ========== MODE TOGGLE LOGIC ==========
+        let isOnlineMode = false;
+
+        function toggleGameMode() {
+            isOnlineMode = !isOnlineMode;
+            if (window.audio) audio.play('click');
+
+            const toggle = document.getElementById('modeToggle');
+            const knob = document.getElementById('toggleKnob');
+            const labelLeft = document.getElementById('toggleLabelLeft');
+            const labelRight = document.getElementById('toggleLabelRight');
+            const levelUI = document.getElementById('levelModeUI');
+            const onlineUI = document.getElementById('onlineModeUI');
+            const levelIndicator = document.getElementById('level-indicator');
+
+            if (isOnlineMode) {
+                // Switch to Online
+                toggle.style.background = 'linear-gradient(180deg, #3b82f6 0%, #1e3a8a 100%)';
+                knob.style.left = '30px';
+                labelLeft.style.color = '#666';
+                labelRight.style.color = '#67e8f9';
+                levelUI.style.display = 'none';
+                onlineUI.style.display = 'flex';
+                levelIndicator.innerText = 'ONLINE 1V1';
+                levelIndicator.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+            } else {
+                // Switch to Levels
+                toggle.style.background = 'linear-gradient(180deg, #ef4444 0%, #991b1b 100%)';
+                knob.style.left = '2px';
+                labelLeft.style.color = '#fca5a5';
+                labelRight.style.color = '#666';
+                levelUI.style.display = 'flex';
+                onlineUI.style.display = 'none';
+                levelIndicator.innerText = `LEVEL ${savedLevel}`;
+                levelIndicator.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+            }
+        }
+
         // Initialize Difficulty
         let currentDifficulty = localStorage.getItem('gameDifficulty') || 'LOW';
         updateDifficultyUI();
@@ -701,6 +884,80 @@
             }
         }
     </script>
+
+    <!-- Join Code Modal -->
+    <div id="joinCodeModal" style="
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.88);
+        justify-content: center;
+        align-items: center;
+        z-index: 200;
+        backdrop-filter: blur(5px);
+        padding: 20px;
+        box-sizing: border-box;
+    " onclick="if(event.target===this) this.style.display='none';">
+        <div style="position: relative; display: inline-flex; justify-content: center; align-items: center; filter: drop-shadow(0 0 35px rgba(255,180,0,0.5)); max-width: 100%;">
+            <img src="./img/continer.png" style="width: min(720px, 98vw); height: auto; display: block;" alt="Frame">
+            <!-- Content: spans from top of scroll body to bottom of scroll body -->
+            <div style="
+                position: absolute;
+                top: 22%; left: 17%;
+                width: 66%; height: 58%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: clamp(12px, 3vw, 22px);
+                box-sizing: border-box;
+            ">
+                <!-- Label -->
+                <p style="margin:0; font-family:'Press Start 2P',cursive; font-size:clamp(10px,2.2vw,14px); color:#fff; letter-spacing:4px; text-shadow: 0 0 12px rgba(255,200,0,0.8), 2px 2px 0 #000;">ENTER CODE</p>
+
+                <!-- Underline-only input -->
+                <input id="joinCodeInput" type="text" placeholder="PASTE CODE HERE"
+                    style="
+                        width: 85%;
+                        padding: 6px 0 12px 0;
+                        font-family: 'Press Start 2P', cursive;
+                        font-size: clamp(10px, 2.2vw, 13px);
+                        background: transparent;
+                        color: #fff;
+                        caret-color: #FFD700;
+                        border: none;
+                        border-bottom: 3px solid #FFD700;
+                        outline: none;
+                        box-sizing: border-box;
+                        text-align: center;
+                        letter-spacing: 3px;
+                        text-shadow: 0 0 8px rgba(255,215,0,0.6);
+                    "
+                    onkeydown="if(event.key==='Enter') document.getElementById('joinCodeConfirmBtn').click();"
+                >
+
+                <!-- Buttons -->
+                <div style="display:flex; gap:clamp(10px,2.5vw,18px); justify-content:center; width:85%;">
+                    <a href="#" class="btn btn-main btn-blue" id="joinCodeConfirmBtn"
+                        style="min-width:0; flex:1; padding:clamp(8px,2vw,13px) 4px; font-size:clamp(9px,1.6vw,12px); margin:0;"
+                        onclick="
+                            const code = document.getElementById('joinCodeInput').value.trim();
+                            if(!code) { document.getElementById('joinCodeInput').style.borderBottomColor='#ef4444'; return false; }
+                            audio.play('click');
+                            sessionStorage.setItem('game_access','true');
+                            sessionStorage.setItem('multiplayerMode','join');
+                            sessionStorage.setItem('multiplayerHostCode', code);
+                            setTimeout(() => { window.location.href = 'game.html?mode=join&host=' + code + '&v=' + Date.now(); }, 300);
+                            return false;
+                        ">CONFIRM</a>
+                    <a href="#" class="btn btn-secondary"
+                        style="min-width:0; flex:1; padding:clamp(8px,2vw,13px) 4px; font-size:clamp(9px,1.6vw,12px); margin:0;"
+                        onclick="document.getElementById('joinCodeModal').style.display='none'; return false;">CANCEL</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Settings Modal -->
     <div id="settingsModal" style="
@@ -831,8 +1088,21 @@
         </div>
     </div>
     <script>
+        // AGGRESSIVE CACHE BUST FOR MULTIPLAYER FIX
+        if ('caches' in window) {
+            caches.keys().then((names) => {
+                for (let name of names) caches.delete(name);
+            });
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
+                navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                    for (let registration of registrations) {
+                        registration.unregister();
+                    }
+                });
+
                 navigator.serviceWorker.register('./sw.js')
                     .then(reg => console.log('SW registered!', reg))
                     .catch(err => console.log('SW failed!', err));
