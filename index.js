@@ -495,8 +495,8 @@ function animate(timestamp) {
   enemies.forEach(e => e.velocity.x = 0);
 
   // Player Movement Speed Boost in Rage/Difficulty
-  const baseMoveSpeed = levelData.difficulty === 'HIGH' ? 6 : 5;
-  const moveSpeed = player.isRaging ? (baseMoveSpeed * 2) : baseMoveSpeed;
+  const baseMoveSpeed = levelData.difficulty === 'HIGH' ? 8 : 7;
+  const moveSpeed = player.isRaging ? (baseMoveSpeed * 1.5) : baseMoveSpeed;
 
   // Player Movement
   if (!player.dead) {
@@ -742,13 +742,15 @@ window.addEventListener('keydown', (event) => {
           player.lastDashTime = now;
           // Dash in facing direction or movement direction
           const dashDir = (player.facing === 'left') ? -1 : 1;
-          player.velocity.x = dashDir * 50; // Super fast (Screen Cross)
+          player.velocity.x = dashDir * 35; // Fast forward burst
 
-          // End dash after 500ms
+          // End dash after 300ms (shorter and snappier)
           setTimeout(() => {
-            player.isDashing = false;
-            player.velocity.x = 0; // Stop immediately after dash
-          }, 500);
+            if (player.isDashing) {
+              player.isDashing = false;
+              player.velocity.x = 0; // Stop immediately after dash
+            }
+          }, 300);
         }
         break
       case ' ':
