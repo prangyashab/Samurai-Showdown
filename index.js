@@ -479,8 +479,8 @@ function animate(timestamp) {
   const activeEnemy = enemies.find(e => !e.dead);
 
   // Victory Condition: All enemies dead
-  const removeDead = enemies.filter(e => e.dead).length;
-  if (player.health <= 0 || removeDead === enemies.length) {
+  const allEnemiesDefeated = enemies.every(e => e.health <= 0);
+  if (player.health <= 0 || allEnemiesDefeated) {
     // Pass a dummy enemy object for the utils function or update utils
     // For now, we simulate the 'main' enemy for the modal logic
     // Pass the actual level to avoid URL mismatch errors
@@ -630,7 +630,9 @@ function animate(timestamp) {
         // HEAL ON KILL (Multi-Enemy Levels)
         if (enemyWasAlive && enemy.health <= 0 && enemies.length > 1) {
           player.health = Math.min(100, player.health + 15); // Heal 15 HP on kill
-          document.querySelector('#playerHealth').style.width = player.health + '%';
+          const playerHpPercent = Math.max(0, player.health);
+          document.querySelector('#playerHealth').style.width = playerHpPercent + '%';
+          document.querySelector('#playerHealthText').innerText = Math.round(playerHpPercent) + '%';
         }
 
         player.isAttacking = false
@@ -650,6 +652,14 @@ function animate(timestamp) {
 
         const healthPercent = Math.max(0, (currentTotalHealth / maxTotalHealth) * 100);
         document.querySelector('#enemyHealth').style.width = healthPercent + '%';
+        document.querySelector('#enemyHealthText').innerText = Math.round(healthPercent) + '%';
+
+        // IMMEDIATE VICTORY CHECK
+        if (currentTotalHealth <= 0) {
+          determineWinner({ player, enemies, timerId, currentLevel: window.gameLevel });
+          player.velocity.x = 0;
+          enemies.forEach(e => e.velocity.x = 0);
+        }
       }
 
       // Enemy hits Player
@@ -667,12 +677,21 @@ function animate(timestamp) {
         triggerShake(15, 15); // Heavier shake when player gets hit
 
         enemy.isAttacking = false
-        document.querySelector('#playerHealth').style.width = Math.max(0, player.health) + '%';
+        const playerHpPercent = Math.max(0, player.health);
+        document.querySelector('#playerHealth').style.width = playerHpPercent + '%';
+        document.querySelector('#playerHealthText').innerText = Math.round(playerHpPercent) + '%';
 
         // Gain small rage on taking damage
         if (!player.isRaging) {
           player.rage = Math.min(player.rage + 5, 100);
           document.querySelector('#playerEnergy').style.width = player.rage + '%';
+        }
+
+        // IMMEDIATE DEFEAT CHECK
+        if (player.health <= 0) {
+          determineWinner({ player, enemies, timerId, currentLevel: window.gameLevel });
+          player.velocity.x = 0;
+          enemies.forEach(e => e.velocity.x = 0);
         }
       }
 
